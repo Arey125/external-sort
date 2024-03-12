@@ -24,11 +24,61 @@ void merge_sorted_files(FILE *output, FILE *l, FILE *r) {
 
     while (has_next_l || has_next_r) {
         if (has_next_l && (strcmp(line_l, line_r) < 0 || !has_next_r)) {
-            fprintf(output, "%s\n", line_l);
+            fprintf(output, "%s", line_l);
             has_next_l = get_line(l, line_l);
+            if (has_next_l || has_next_r) {
+                fprintf(output, "\n");
+            }
             continue;
         }
-        fprintf(output, "%s\n", line_r);
+        fprintf(output, "%s", line_r);
         has_next_r = get_line(r, line_r);
+        if (has_next_l || has_next_r) {
+            fprintf(output, "\n");
+        }
     }
+}
+
+void copy_file(FILE* output, FILE* input) {
+    setvbuf(output, NULL, _IOFBF, BUF_SIZE);
+    setvbuf(input, NULL, _IOFBF, BUF_SIZE);
+
+    while (1) {
+        int c = fgetc(input);
+        if (c == EOF) {
+            break;
+        }
+        fputc(c, output);
+    }
+}
+
+void merge(FILE *output, FILE **files, int count) {
+    if (count == 1) {
+        copy_file(output, files[0]);
+        return;
+    }
+    int half = count / 2;
+
+    static int file_ind = 0;
+
+    char filename_l[MAX_LINE_SIZE];
+    char filename_r[MAX_LINE_SIZE];
+    sprintf(filename_l, "./tmp/l_%d.txt", file_ind);
+    sprintf(filename_r, "./tmp/r_%d.txt", file_ind);
+    file_ind++;
+
+    FILE *l = fopen(filename_l, "w");
+    FILE *r = fopen(filename_r, "w");
+
+    merge(l, files, half);
+    merge(r, files + half, count - half);
+    fclose(l);
+    fclose(r);
+
+    l = fopen(filename_l, "r");
+    r = fopen(filename_r, "r");
+    merge_sorted_files(output, l, r);
+
+    fclose(l);
+    fclose(r);
 }
