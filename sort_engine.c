@@ -45,16 +45,14 @@ char *singlethread_sort(char *buf, long long int f_size) {
         int str_len = strlen(lines[i]) + 1;
         strncpy(cursor, lines[i], str_len);
         cursor[str_len - 1] = '\n';
-        // printf("%s    len == %d\n", lines[i], str_len);
         cursor += str_len;
     }
-    printf("cursor  =  %d\n", len);
   
     return tmp_buf;
 }
 
 void sort_file(int fd) {
-    struct stat s_fstat; //sys ctruct for file info
+    struct stat s_fstat; //sys struct for file info
     struct offsets s_offset = {0, 0}; // struct for multithreads sorts, manual wrote
 
     if (fstat(fd, &s_fstat) != 0) {
@@ -62,7 +60,7 @@ void sort_file(int fd) {
         exit(1);
     }
 
-    int f_size = s_fstat.st_size;
+    long long int f_size = s_fstat.st_size;
     printf("File size: %lld bytes, [%lld MB]\n", f_size, f_size / (1024 * 1024));
 
     char *buf = mmap(NULL, f_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
@@ -72,11 +70,10 @@ void sort_file(int fd) {
         exit(1);
     }
 
-    char *buf_copy; //= malloc(f_size);
+    char *buf_copy;
 
     buf_copy = singlethread_sort(buf, f_size);
-    memcpy(buf, buf_copy, f_size) ==
-        NULL; // WARNING!!! Unsave function! At-ta-ta!!
+    memcpy(buf, buf_copy, f_size) == NULL; // WARNING!!! Unsave function! At-ta-ta!!
 
     if (msync(buf, f_size, MS_ASYNC) != 0) {
         perror("(1)msync() error");

@@ -37,11 +37,10 @@ int get_freeRAM (struct sysinfo s_sysinfo, struct memory_manage *s_mm) {
         max_mapped_file_size = s_rlim.rlim_cur;
     }
 
-    s_mm->freeRAM = freeRAM;
-    s_mm->max_mapped_file_size = max_mapped_file_size;
-
-
-    printf("(2)Maximum file size that can be mapped with mmap: %lld bytes [%lld MB]\n", max_mapped_file_size, max_mapped_file_size / (1024 * 1024));
+    // s_mm->freeRAM = freeRAM;
+    s_mm->freeRAM = 300 * 1024 * 1024;
+    // s_mm->max_mapped_file_size = max_mapped_file_size;
+    s_mm->max_mapped_file_size = 100 * 1024*1024;
     
     return 0;
 }

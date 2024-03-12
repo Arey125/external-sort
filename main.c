@@ -10,8 +10,11 @@
 
 #include "sort_engine.h"
 #include "sys_utils_wrappers.h"
+#include "file_cutter.h"
 
 #define MAX_THREADS 10
+
+
 
 struct offsets
 {
@@ -19,6 +22,7 @@ struct offsets
     long long int offsets[MAX_THREADS];
     long long int old_offset;
 };
+
 
 //struct memory_manage
 //{
@@ -39,8 +43,9 @@ int main(int argc, char const *argv[])
     int sf_fd;      //File descriptor
     struct sysinfo s_sysinfo; //sys stuct for current machine info (RAM & etc)
     struct memory_manage s_mm = {0, 0};
+    struct stat s_fstat; //sys struct for file info
     long long int f_size;
-    //long long int freeRAM;
+    
     
 
 
@@ -54,67 +59,30 @@ int main(int argc, char const *argv[])
     sf_fd = fileno(sf_flow); //int-type file descriptor for lowlewel syscalls
 
 
-    //Get filesize info  
+    //Get filesize info
+    if (fstat(sf_fd, &s_fstat) != 0) {
+        perror("fstat() error");
+        exit(1);
+    }
+    f_size = s_fstat.st_size;  
 
-    if(get_freeRAM(s_sysinfo, &s_mm) != 0){ //Get max mapped file size via mmap in current system
+    if(get_freeRAM(s_sysinfo, &s_mm) != 0){ //Get max mapped file size via mmap in current system and get RAM-size
         perror("Get memory info error");
         exit(EXIT_FAILURE);
     }
-
+    printf("File size: %lld bytes [%lld] MB\n", f_size, f_size / (1024 * 1024));
+    printf("Maximum file size that can be mapped with mmap: %lld bytes [%lld MB]\n", s_mm.max_mapped_file_size, s_mm.max_mapped_file_size / (1024 * 1024));
 
     //If the file fits entirely at one time, do it in one thread
-    if((f_size) < s_mm.max_mapped_file_size){  
+    if(f_size < s_mm.max_mapped_file_size){  
         sort_file(sf_fd);
-
+        return 0;
+    } else
+    {   
+        char** file_names;
+        int files_count = file_cutter(sf_fd, s_mm.freeRAM, f_size, file_names);
         return 0;
     }
     
-    
-    //Multithread sort
-    //Now I try mapded file whitch largest max_mapped_file_size
-    long long int alignment;
-    long long int offset = 0;
-    long long int halfRAM = (s_mm.freeRAM * 40) / 100;
-    long long int last_character = halfRAM;
- 
-
-    while (offset < f_size)
-    {
-        char* buf = mmap(NULL, halfRAM, PROT_READ | PROT_WRITE, MAP_SHARED, sf_fd, offset);
-        if (buf == MAP_FAILED) {
-            perror("mmap(cutter)");
-            }
-
-        while (buf[last_character] != '\n')
-        {
-            last_character--;
-            buf = mremap(buf, halfRAM, last_character, MREMAP_MAYMOVE);
-            if (buf == MAP_FAILED) {
-            perror("mremap");
-            }
-        }
-        FILE* newfile = fopen("split.txt", "w");
-        fwrite(buf, last_character, sizeof(char), newfile);
-        fclose(newfile);
-        munmap(buf, halfRAM);
-        if (buf == MAP_FAILED) {
-            perror("munmap (cutter)");
-        }
-        offset = last_character + 1;
-        offset = offset - (offset % 4096);
-
-
-        last_character = halfRAM;
-        
-        printf("file offset %lld\n", offset);
-
-    }
-    
-    
-
-
-
-
-
     return 0;
 }
