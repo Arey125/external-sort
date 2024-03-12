@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]) {
 
     FILE *out = fopen("out.txt", "w");
 
-    merge(out, files, argc - 1);
+    merge(out, argv + 1, argc - 1);
 
     for (int i = 0; i < argc - 1; i++) {
         fclose(files[i]);

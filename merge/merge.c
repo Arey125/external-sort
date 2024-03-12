@@ -2,8 +2,8 @@
 
 #include "merge.h"
 
-#define BUF_SIZE 1024
-#define MAX_LINE_SIZE 128
+#define BUF_SIZE 65536
+#define MAX_LINE_SIZE 256
 
 int get_line(FILE* f, char* buf) {
     return fscanf(f, "%s", buf) != EOF;
@@ -23,7 +23,7 @@ void merge_sorted_files(FILE *output, FILE *l, FILE *r) {
     int has_next_r = get_line(r, line_r);
 
     while (has_next_l || has_next_r) {
-        if (has_next_l && (strcmp(line_l, line_r) < 0 || !has_next_r)) {
+        if (has_next_l && (!has_next_r || strcmp(line_l, line_r) < 0)) {
             fprintf(output, "%s", line_l);
             has_next_l = get_line(l, line_l);
             if (has_next_l || has_next_r) {
@@ -52,9 +52,10 @@ void copy_file(FILE* output, FILE* input) {
     }
 }
 
-void merge(FILE *output, FILE **files, int count) {
+void merge(FILE *output, const char **files, int count) {
     if (count == 1) {
-        copy_file(output, files[0]);
+        FILE *file = fopen(files[0], "r");
+        copy_file(output, file);
         return;
     }
     int half = count / 2;
