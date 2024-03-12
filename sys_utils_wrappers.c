@@ -37,7 +37,7 @@ int get_freeRAM (struct sysinfo s_sysinfo, struct memory_manage *s_mm) {
         max_mapped_file_size = s_rlim.rlim_cur;
     }
 
-    s_mm->freeRAM = 268435456;//freeRAM;
+    s_mm->freeRAM = freeRAM;
     s_mm->max_mapped_file_size = max_mapped_file_size;
 
 

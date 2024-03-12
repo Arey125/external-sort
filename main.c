@@ -38,8 +38,6 @@ int main(int argc, char const *argv[])
     FILE* sf_flow; // Source file flow
     int sf_fd;      //File descriptor
     struct sysinfo s_sysinfo; //sys stuct for current machine info (RAM & etc)
-    struct stat s_fstat; //sys ctruct for file info
-    struct offsets s_offset = {0, {0}, 0}; // struct for multithreads sorts, manual wrote
     struct memory_manage s_mm = {0, 0};
     long long int f_size;
     //long long int freeRAM;
@@ -57,13 +55,6 @@ int main(int argc, char const *argv[])
 
 
     //Get filesize info  
-    if(fstat(sf_fd, &s_fstat) !=0){
-        perror("fstat() error");
-        return -1;
-    }
-    f_size = s_fstat.st_size;
-    printf("File size: %lld bytes, [%lld MB]\n", f_size, f_size / (1024 * 1024)); 
-
 
     if(get_freeRAM(s_sysinfo, &s_mm) != 0){ //Get max mapped file size via mmap in current system
         perror("Get memory info error");
@@ -73,28 +64,9 @@ int main(int argc, char const *argv[])
 
     //If the file fits entirely at one time, do it in one thread
     if((f_size) < s_mm.max_mapped_file_size){  
-    
-        char* buf = mmap(NULL, f_size, PROT_READ | PROT_WRITE, MAP_SHARED, sf_fd, s_offset.old_offset);
-        if (buf == MAP_FAILED)
-        {
-            perror("(1)mmap() error");
-            return -1;
-        }
+        sort_file(sf_fd);
 
-        char* buf_copy; //= malloc(f_size);
-        
-
-        buf_copy = singlethread_sort(buf, f_size);
-        memcpy(buf, buf_copy, f_size) == NULL; //WARNING!!! Unsave function! At-ta-ta!!
-
-
-        if(msync(buf, f_size, MS_ASYNC) != 0){
-            perror("(1)msync() error");
-            return -1;
-        }
-
-        munmap(buf, f_size);
-        free(buf_copy);
+        return 0;
     }
     
     
