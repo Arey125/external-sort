@@ -6,7 +6,7 @@
 #define MAX_LINE_SIZE 256
 #define BUF_SIZE 65536
 
-int get_line(FILE *f, char *buf) {
+int get_line1(FILE *f, char *buf) {
     return fscanf(f, "%s", buf) != EOF;
 }
 
@@ -39,7 +39,7 @@ int split(const char *filename, char ***filenames_ptr, int size) {
     char line_buf[MAX_LINE_SIZE];
 
     int file_size = 0;
-    int has_next = get_line(file, line_buf);
+    int has_next = get_line1(file, line_buf);
 
     for (int i = 0; i < count; i++) {
         filenames[i] = malloc(256 * sizeof(char));
@@ -64,7 +64,7 @@ int split(const char *filename, char ***filenames_ptr, int size) {
             if (file_size < size) {
                 fprintf(new_file, "%s", line_buf);
                 file_size += strlen(line_buf);
-                has_next = get_line(file, line_buf);
+                has_next = get_line1(file, line_buf);
             }
 
             if (file_size >= size) {

@@ -52,7 +52,7 @@ void copy_file(FILE* output, FILE* input) {
     }
 }
 
-void merge(FILE *output, const char **files, int count) {
+void merge(FILE *output, char **files, int count) {
     if (count == 1) {
         FILE *file = fopen(files[0], "r");
         copy_file(output, file);
